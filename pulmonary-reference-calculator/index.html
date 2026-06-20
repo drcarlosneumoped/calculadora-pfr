@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Calculadora de función pulmonar</title>
+    <link rel="stylesheet" href="styles.css?v=19">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace" aria-label="Calculadora">
+        <header class="topbar">
+          <div>
+            <h1>Calculadora de función pulmonar</h1>
+            <p>Valores de referencia, respuesta broncodilatadora e interpretación ERS/ATS.</p>
+          </div>
+          <div class="actions">
+            <button class="secondary" id="loadDemo" type="button">Ejemplo</button>
+            <button class="secondary" id="clearAll" type="button">Limpiar</button>
+            <button class="primary" id="printReport" type="button" hidden>Generar PDF / imprimir</button>
+          </div>
+        </header>
+
+        <section class="patient-panel" aria-label="Datos del paciente">
+          <label>
+            Nombre
+            <input id="patientName" autocomplete="off" placeholder="Paciente">
+          </label>
+          <label>
+            Fecha
+            <input id="studyDate" type="date">
+          </label>
+          <label>
+            Fecha de nacimiento
+            <input id="birthDate" type="date">
+          </label>
+          <label>
+            Edad calculada
+            <input id="age" type="number" min="0" max="120" step="0.01" placeholder="años" readonly>
+          </label>
+          <label>
+            Sexo
+            <select id="sex">
+              <option value="">Seleccionar</option>
+              <option value="female">Mujer</option>
+              <option value="male">Hombre</option>
+            </select>
+          </label>
+          <label>
+            Talla
+            <input id="height" type="number" min="30" max="230" step="0.1" placeholder="cm">
+          </label>
+          <label>
+            Peso
+            <input id="weight" type="number" min="1" max="250" step="0.1" placeholder="kg">
+          </label>
+        </section>
+
+        <section class="study-selector" aria-label="Estudios realizados">
+          <div>
+            <h2>Estudios realizados</h2>
+            <p>Marque solo las pruebas realizadas para mostrar sus pestañas y agregarlas al reporte.</p>
+          </div>
+          <div class="study-options">
+            <label class="check-option">
+              <input class="study-check" type="checkbox" value="spirometry">
+              <span>Espirometría</span>
+            </label>
+            <div class="study-suboptions" id="spirometryModeOptions" hidden>
+              <label class="inline-check">
+                <input name="spirometryMode" type="radio" value="simple" checked>
+                <span>Simple</span>
+              </label>
+              <label class="inline-check">
+                <input name="spirometryMode" type="radio" value="bd">
+                <span>Con broncodilatador</span>
+              </label>
+            </div>
+            <label class="check-option">
+              <input class="study-check" type="checkbox" value="oscillometry">
+              <span>Oscilometría + BD</span>
+            </label>
+            <label class="check-option">
+              <input class="study-check" type="checkbox" value="feno">
+              <span>FeNO</span>
+            </label>
+            <label class="check-option">
+              <input class="study-check" type="checkbox" value="peakflow">
+              <span>Flujometría</span>
+            </label>
+            <label class="check-option">
+              <input class="study-check" type="checkbox" value="dlco">
+              <span>DLCO</span>
+            </label>
+            <label class="check-option">
+              <input class="study-check" type="checkbox" value="bloodgas">
+              <span>Gasometría</span>
+            </label>
+          </div>
+        </section>
+
+        <nav class="tabs" aria-label="Pruebas">
+          <button class="tab active" data-tab="spirometry" type="button">Espirometría</button>
+          <button class="tab" data-tab="oscillometry" type="button">Oscilometría + BD</button>
+          <button class="tab" data-tab="feno" type="button">FeNO</button>
+          <button class="tab" data-tab="peakflow" type="button">Flujometría</button>
+          <button class="tab" data-tab="dlco" type="button">DLCO</button>
+          <button class="tab" data-tab="bloodgas" type="button">Gasometría</button>
+        </nav>
+
+        <form id="calculatorForm" class="test-forms">
+          <section class="test-panel active" data-panel="spirometry">
+            <div class="panel-head">
+              <h2 id="spirometryTitle">Espirometría simple</h2>
+              <p>Ingrese los valores pre y post. Predicho, LIN, porcentaje del predicho y z-score se calculan automáticamente para el reporte.</p>
+            </div>
+            <div class="compact-grid spiro-quality">
+              <label>
+                Calidad del estudio
+                <select id="spiroQuality">
+                  <option value="acceptable">Aceptable</option>
+                  <option value="reserve">Con reservas</option>
+                  <option value="uninterpretable">No interpretable</option>
+                </select>
+              </label>
+              <label>
+                Nota de calidad
+                <input id="spiroQualityNote" autocomplete="off" placeholder="Opcional">
+              </label>
+            </div>
+            <div class="grid-table three">
+              <span>Parámetro</span><span>Pre</span><span class="spiro-post">Post</span>
+              <label>FEV1 (L)</label>
+              <input id="fev1Pre" type="number" step="0.01">
+              <input id="fev1Post" class="spiro-post" type="number" step="0.01">
+              <label>FVC (L)</label>
+              <input id="fvcPre" type="number" step="0.01">
+              <input id="fvcPost" class="spiro-post" type="number" step="0.01">
+              <label>FEV1/FVC</label>
+              <input id="ratioPre" type="number" step="0.01" placeholder="auto" readonly>
+              <input id="ratioPost" class="spiro-post" type="number" step="0.01" placeholder="auto" readonly>
+            </div>
+            <div class="photo-import" data-photo-study="spirometry">
+              <label>
+                Foto o texto de espirometría
+                <input class="photo-input" type="file" accept="image/*" capture="environment">
+              </label>
+              <textarea class="photo-text" rows="3" placeholder="Pegue aquí texto reconocido por Live Text/Google Lens si el OCR del navegador no está disponible."></textarea>
+              <button class="secondary photo-apply" type="button">Copiar valores a la prueba</button>
+              <p class="photo-status"></p>
+            </div>
+          </section>
+
+          <section class="test-panel" data-panel="oscillometry">
+            <div class="panel-head">
+              <h2>Oscilometría con broncodilatador</h2>
+              <p>Ingrese los valores pre y post. Predicho, límites, porcentaje del predicho y z-score se calculan automáticamente para el reporte.</p>
+            </div>
+            <div class="grid-table three">
+              <span>Parámetro</span><span>Pre</span><span>Post</span>
+              <label>R5 (kPa/L/s)</label>
+              <input id="r5Pre" type="number" step="0.01">
+              <input id="r5Post" type="number" step="0.01">
+              <label>R20 (kPa/L/s)</label>
+              <input id="r20Pre" type="number" step="0.01">
+              <input id="r20Post" type="number" step="0.01">
+              <label>X5 (kPa/L/s)</label>
+              <input id="x5Pre" type="number" step="0.01">
+              <input id="x5Post" type="number" step="0.01">
+              <label>AX</label>
+              <input id="axPre" type="number" step="0.01">
+              <input id="axPost" type="number" step="0.01">
+              <label>Fres (Hz)</label>
+              <input id="fresPre" type="number" step="0.1">
+              <input id="fresPost" type="number" step="0.1">
+            </div>
+            <input id="r5r20Pre" type="hidden">
+            <input id="r5r20Post" type="hidden">
+            <input id="r5r20RatioPre" type="hidden">
+            <input id="r5r20RatioPost" type="hidden">
+            <div class="photo-import" data-photo-study="oscillometry">
+              <label>
+                Foto o texto de oscilometría
+                <input class="photo-input" type="file" accept="image/*" capture="environment">
+              </label>
+              <textarea class="photo-text" rows="3" placeholder="Pegue aquí texto reconocido por Live Text/Google Lens si el OCR del navegador no está disponible."></textarea>
+              <button class="secondary photo-apply" type="button">Copiar valores a la prueba</button>
+              <p class="photo-status"></p>
+            </div>
+          </section>
+
+          <section class="test-panel" data-panel="feno">
+            <div class="panel-head">
+              <h2>FeNO</h2>
+              <p>Interpretación por puntos de corte adultos/niños; ajustar si su laboratorio usa otro consenso.</p>
+            </div>
+            <div class="compact-grid">
+              <label>
+                FeNO
+                <input id="fenoValue" type="number" step="1" placeholder="ppb">
+              </label>
+              <label>
+                Grupo
+                <select id="fenoAgeGroup">
+                  <option value="adult">Adulto</option>
+                  <option value="child">Niño</option>
+                </select>
+              </label>
+              <label>
+                Corticoide inhalado
+                <select id="icsUse">
+                  <option value="">No especificado</option>
+                  <option value="no">No</option>
+                  <option value="yes">Sí</option>
+                </select>
+              </label>
+              <label class="check-option compact-check">
+                <input id="hasPreviousFeno" type="checkbox">
+                <span>Hay resultado previo de FeNO</span>
+              </label>
+              <label class="previous-feno-field" hidden>
+                FeNO previo
+                <input id="previousFenoValue" type="number" step="1" placeholder="ppb">
+              </label>
+              <label class="previous-feno-field" hidden>
+                Fecha previa
+                <input id="previousFenoDate" type="date">
+              </label>
+            </div>
+            <div class="photo-import" data-photo-study="feno">
+              <label>
+                Foto o texto de FeNO
+                <input class="photo-input" type="file" accept="image/*" capture="environment">
+              </label>
+              <textarea class="photo-text" rows="3" placeholder="Pegue aquí texto reconocido por Live Text/Google Lens si el OCR del navegador no está disponible."></textarea>
+              <button class="secondary photo-apply" type="button">Copiar valores a la prueba</button>
+              <p class="photo-status"></p>
+            </div>
+          </section>
+
+          <section class="test-panel" data-panel="peakflow">
+            <div class="panel-head">
+              <h2>Flujometría</h2>
+              <p>Calcula porcentaje del predicho o mejor personal y variabilidad diurna.</p>
+            </div>
+            <div class="compact-grid">
+              <label>
+                PEF actual
+                <input id="pefActual" type="number" step="1" placeholder="L/min">
+              </label>
+              <label>
+                PEF predicho
+                <input id="pefPred" type="number" step="1" placeholder="auto" readonly>
+              </label>
+              <label>
+                Mejor personal
+                <input id="pefBest" type="number" step="1" placeholder="L/min">
+              </label>
+              <label>
+                PEF max diario
+                <input id="pefMax" type="number" step="1" placeholder="L/min">
+              </label>
+              <label>
+                PEF min diario
+                <input id="pefMin" type="number" step="1" placeholder="L/min">
+              </label>
+            </div>
+            <div class="photo-import" data-photo-study="peakflow">
+              <label>
+                Foto o texto de flujometría
+                <input class="photo-input" type="file" accept="image/*" capture="environment">
+              </label>
+              <textarea class="photo-text" rows="3" placeholder="Pegue aquí texto reconocido por Live Text/Google Lens si el OCR del navegador no está disponible."></textarea>
+              <button class="secondary photo-apply" type="button">Copiar valores a la prueba</button>
+              <p class="photo-status"></p>
+            </div>
+          </section>
+
+          <section class="test-panel" data-panel="dlco">
+            <div class="panel-head">
+              <h2>DLCO</h2>
+              <p>Calcula valores de referencia por edad e integra difusión con VA, KCO y volúmenes pulmonares cuando están disponibles.</p>
+            </div>
+            <div class="compact-grid">
+              <label>
+                DLCO
+                <input id="dlcoValue" type="number" step="0.01" placeholder="ml/min/mmHg">
+              </label>
+              <label>
+                VA
+                <input id="dlcoVa" type="number" step="0.01" placeholder="L">
+              </label>
+              <label>
+                KCO / DLCO/VA
+                <input id="dlcoKco" type="number" step="0.01" placeholder="auto" readonly>
+              </label>
+              <label>
+                Hemoglobina
+                <input id="dlcoHb" type="number" step="0.1" placeholder="g/dL">
+              </label>
+              <label>
+                Altitud
+                <input id="dlcoAltitude" type="number" step="0.01" placeholder="km">
+              </label>
+              <label>
+                TLC
+                <input id="dlcoTlc" type="number" step="0.01" placeholder="L">
+              </label>
+              <label>
+                RV
+                <input id="dlcoRv" type="number" step="0.01" placeholder="L">
+              </label>
+            </div>
+            <div class="photo-import" data-photo-study="dlco">
+              <label>
+                Foto o texto de DLCO
+                <input class="photo-input" type="file" accept="image/*" capture="environment">
+              </label>
+              <textarea class="photo-text" rows="3" placeholder="Pegue aquí texto reconocido por Live Text/Google Lens si el OCR del navegador no está disponible."></textarea>
+              <button class="secondary photo-apply" type="button">Copiar valores a la prueba</button>
+              <p class="photo-status"></p>
+            </div>
+          </section>
+
+          <section class="test-panel" data-panel="bloodgas">
+            <div class="panel-head">
+              <h2>Gasometría arterial</h2>
+              <p>Referencia de oxigenación a 2240 m y lectura ácido-base rápida.</p>
+            </div>
+            <div class="compact-grid">
+              <label>
+                pH
+                <input id="ph" type="number" step="0.01">
+              </label>
+              <label>
+                PaCO2
+                <input id="paco2" type="number" step="0.1" placeholder="mmHg">
+              </label>
+              <label>
+                PaO2
+                <input id="pao2" type="number" step="0.1" placeholder="mmHg">
+              </label>
+              <label>
+                HCO3
+                <input id="hco3" type="number" step="0.1" placeholder="mmol/L">
+              </label>
+              <label>
+                SaO2
+                <input id="sao2" type="number" step="0.1" placeholder="%">
+              </label>
+              <label>
+                SBE
+                <input id="baseExcess" type="number" step="0.1" placeholder="mmol/L">
+              </label>
+              <label>
+                FiO2
+                <input id="fio2" type="number" step="1" placeholder="%">
+              </label>
+              <label>
+                Ciudad / altitud
+                <select id="gasCity">
+                  <option value="cdmx">Ciudad de México / 2240 m</option>
+                  <option value="seaLevel">Nivel del mar</option>
+                </select>
+              </label>
+              <label>
+                Lactato
+                <input id="lactate" type="number" step="0.1" placeholder="mmol/L">
+              </label>
+            </div>
+            <div class="photo-import" data-photo-study="bloodgas">
+              <label>
+                Foto o texto de gasometria
+                <input class="photo-input" type="file" accept="image/*" capture="environment">
+              </label>
+              <textarea class="photo-text" rows="3" placeholder="Pegue aquí texto reconocido por Live Text/Google Lens si el OCR del navegador no está disponible."></textarea>
+              <button class="secondary photo-apply" type="button">Copiar valores a la prueba</button>
+              <p class="photo-status"></p>
+            </div>
+          </section>
+        </form>
+
+        <section class="interpretation-review" aria-label="Revisión de interpretación">
+          <div>
+            <h2>Revisión de interpretación</h2>
+            <p>Confirme la interpretación generada o active interpretación manual para imprimir su propio texto.</p>
+          </div>
+          <div id="interpretationControls" class="interpretation-controls"></div>
+        </section>
+      </section>
+
+      <aside class="report-pane" aria-label="Reporte">
+        <div class="status-strip">
+          <strong>Estado</strong>
+          <span id="validationStatus">Pendiente de datos</span>
+        </div>
+        <article id="report" class="report">
+          <section id="coverPage" class="report-page">
+            <header>
+              <h2>Reporte de función pulmonar</h2>
+              <p id="reportMeta">Ingrese datos para generar el reporte.</p>
+            </header>
+            <section class="requested-studies">
+              <h3>Estudios solicitados</h3>
+              <p id="selectedStudyLine">Seleccione estudios para iniciar.</p>
+            </section>
+            <section id="interpretationSection">
+              <h3>Interpretación</h3>
+              <div id="interpretationList"></div>
+              <div id="integratedInterpretation"></div>
+            </section>
+            <footer class="report-footer">
+              <div></div>
+              <p><strong>Dr. Carlos G. Valderrábano</strong></p>
+              <p>Neumólogo Pediatra. Fisiología Respiratoria y Laboratorio de Función Pulmonar</p>
+              <p>9610772 / 11546411</p>
+              <p>CNN-1299 / CNN-1299-RS-201</p>
+            </footer>
+          </section>
+          <section id="resultSection">
+            <h3>Resultados calculados</h3>
+            <div id="resultTables"></div>
+            <section class="note">
+              <h3>Referencias</h3>
+              <p id="technicalNote"></p>
+            </section>
+          </section>
+          <section id="algorithmSection">
+            <h3>Algoritmo de interpretación utilizado</h3>
+            <div id="algorithmList"></div>
+          </section>
+        </article>
+      </aside>
+    </main>
+    <script src="reference-data.js?v=7"></script>
+    <script src="reference-engine.js?v=11"></script>
+    <script src="app.js?v=28"></script>
+  </body>
+</html>
